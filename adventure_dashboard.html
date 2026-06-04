@@ -1,0 +1,1255 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>冒险者公会 · 闯关进度指挥部 v2</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+  :root {
+    --bg-deep: #0d0a14;
+    --bg-card: #1a1428;
+    --bg-card2: #221a32;
+    --border-gold: #d4a843;
+    --border-gold-dark: #8b6914;
+    --border-dim: #3a2a5c;
+    --border-dim-light: #5a4a7c;
+    --text-primary: #e8d4a8;
+    --text-dim: #8a7aaa;
+    --text-bright: #ffe8c0;
+    --blue-bright: #5b9cf5;
+    --blue-dark: #1a3a6c;
+    --green-bright: #4ae04a;
+    --green-dark: #1a4a1a;
+    --accent-red: #f05050;
+    --accent-amber: #f0a830;
+    --accent-purple: #9a6cf0;
+    --accent-purple-dark: #4a1a7a;
+    --font-pixel: 'Press Start 2P', monospace;
+    --font-pixel-cjk: 'Press Start 2P', 'SimHei', monospace;
+    --pixel-size: 4px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  /* pixel border mixin via box-shadow */
+  body {
+    background: #0a0814;
+    background-image:
+      repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(100,70,180,0.03) 3px, rgba(100,70,180,0.03) 4px),
+      repeating-linear-gradient(90deg, transparent, transparent 3px, rgba(100,70,180,0.03) 3px, rgba(100,70,180,0.03) 4px);
+    color: var(--text-primary);
+    font-family: var(--font-pixel-cjk);
+    min-height: 100vh;
+    padding: 20px;
+    image-rendering: pixelated;
+    position: relative;
+  }
+
+  /* pixel corner decorations */
+  body::before {
+    content: '';
+    position: fixed; bottom: 16px; left: 16px;
+    width: 32px; height: 36px;
+    background: #4a8a2a;
+    box-shadow:
+      4px 0 0 #4a8a2a, 8px 0 0 #3a7020,
+      0 4px 0 #4a8a2a, 4px 4px 0 #3a7020, 8px 4px 0 #2a5010,
+      12px 0 0 #5a9a3a, 12px 4px 0 #4a8a2a,
+      0 8px 0 #6aba4a, 4px 8px 0 #5a9a3a,
+      12px 8px 0 #4a8a2a,
+      0 12px 0 #4a8a2a, 4px 12px 0 #3a7020,
+      8px 12px 0 #2a5010, 12px 12px 0 #4a8a2a;
+  }
+  body::after {
+    content: '';
+    position: fixed; bottom: 16px; right: 16px;
+    width: 28px; height: 28px;
+    background: #8b6914;
+    box-shadow:
+      4px 0 0 #6a4f10, 8px 0 0 #8b6914, 12px 0 0 #6a4f10,
+      16px 0 0 #8b6914, 20px 0 0 #6a4f10,
+      0 4px 0 #6a4f10, 4px 4px 0 #d4a843, 8px 4px 0 #6a4f10,
+      12px 4px 0 #d4a843, 16px 4px 0 #6a4f10, 20px 4px 0 #8b6914,
+      0 8px 0 #8b6914, 4px 8px 0 #6a4f10, 8px 8px 0 #8b6914,
+      12px 8px 0 #6a4f10, 16px 8px 0 #8b6914, 20px 8px 0 #6a4f10,
+      0 12px 0 #6a4f10, 4px 12px 0 #8b6914, 8px 12px 0 #6a4f10,
+      12px 12px 0 #8b6914, 16px 12px 0 #6a4f10, 20px 12px 0 #8b6914;
+  }
+
+  .main-container {
+    max-width: 1400px; margin: 0 auto;
+    display: grid; gap: 20px;
+  }
+
+  /* ========== PIXEL BORDER BASE ========== */
+  .pixel-border, .header, .global-progress-section,
+  .adventurer-card, .hall-of-fame, .history-section,
+  .history-preview, .quest-modal, .date-badge {
+    border: 0;
+    box-shadow:
+      0 0 0 3px var(--bg-deep),
+      0 0 0 6px var(--border-gold-dark),
+      0 0 0 7px var(--bg-deep),
+      0 0 0 10px var(--border-gold);
+  }
+
+  /* ========== HEADER ========== */
+  .header {
+    text-align: center;
+    padding: 30px 20px 20px;
+    position: relative;
+    background: linear-gradient(180deg, rgba(30,20,50,0.95) 0%, rgba(20,14,35,0.95) 100%);
+    box-shadow:
+      0 0 0 3px var(--bg-deep),
+      0 0 0 6px var(--border-gold-dark),
+      0 0 0 7px var(--bg-deep),
+      0 0 0 10px var(--border-gold);
+  }
+  .header::before {
+    content: '';
+    position: absolute; bottom: 0; left: 5%; right: 5%;
+    height: 4px;
+    background: repeating-linear-gradient(90deg, var(--border-gold) 0px, var(--border-gold) 16px, transparent 16px, transparent 24px);
+  }
+  .header .title-icon {
+    display: inline-block;
+    margin-bottom: 12px;
+  }
+  .header .title-icon img {
+    display: block;
+  }
+  .header h1 {
+    font-family: var(--font-pixel-cjk);
+    font-size: 22px;
+    color: #ffe090;
+    letter-spacing: 2px;
+    text-shadow:
+      3px 3px 0 #6a4a10,
+      4px 4px 0 #000,
+      0 0 20px rgba(255,224,144,0.4);
+    margin-bottom: 6px;
+    line-height: 1.5;
+  }
+  .header .subtitle {
+    color: var(--text-dim);
+    font-size: 10px;
+    letter-spacing: 4px;
+    font-family: var(--font-pixel);
+  }
+  .header .date-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    margin-top: 12px;
+    padding: 8px 20px;
+    background: rgba(15,10,25,0.95);
+    font-size: 11px; color: var(--text-dim);
+    font-family: var(--font-pixel-cjk);
+    box-shadow:
+      0 0 0 2px #000,
+      0 0 0 4px var(--border-dim);
+  }
+  .header .date-badge .dot {
+    width: 8px; height: 8px;
+    background: var(--green-bright);
+    box-shadow:
+      0 0 6px var(--green-bright),
+      0 0 12px var(--green-bright);
+    animation: pixelPulse 1.5s steps(2) infinite;
+  }
+  @keyframes pixelPulse { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+  /* ========== GLOBAL PROGRESS ========== */
+  .global-progress-section {
+    background: linear-gradient(180deg, #182030 0%, #111a28 100%);
+    padding: 28px 32px;
+    position: relative;
+    box-shadow:
+      0 0 0 3px #000,
+      0 0 0 6px var(--border-dim),
+      0 0 0 7px #000,
+      0 0 0 10px var(--border-dim-light);
+  }
+  .global-progress-section::after {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 4px;
+    background: repeating-linear-gradient(90deg, var(--green-bright) 0px, var(--green-bright) 12px, #000 12px, #000 16px);
+  }
+  .global-progress-section .section-label {
+    font-family: var(--font-pixel);
+    font-size: 11px;
+    color: var(--green-bright);
+    letter-spacing: 2px;
+    margin-bottom: 16px;
+    text-shadow: 2px 2px 0 #0a2a0a;
+  }
+  .global-progress-section .stats-row {
+    display: flex; align-items: center; gap: 30px; flex-wrap: wrap;
+  }
+  .global-progress-section .stat-item {
+    text-align: center; min-width: 80px;
+  }
+  .global-progress-section .stat-value {
+    font-family: var(--font-pixel);
+    font-size: 24px;
+    color: #ffe090;
+    text-shadow: 2px 2px 0 #6a4a10;
+  }
+  .global-progress-section .stat-label {
+    font-size: 10px; color: var(--text-dim); margin-top: 4px;
+  }
+  .progress-bar-wrap.global {
+    flex: 1; min-width: 250px;
+  }
+  /* PIXEL SEGMENTED PROGRESS BAR */
+  .progress-bar-wrap.global .progress-outer {
+    height: 22px;
+    background: #0a1a0a;
+    box-shadow:
+      0 0 0 2px #000,
+      0 0 0 4px var(--green-dark);
+    overflow: hidden;
+    position: relative;
+    image-rendering: pixelated;
+  }
+  .progress-bar-wrap.global .progress-fill {
+    height: 100%;
+    background: repeating-linear-gradient(
+      90deg,
+      #2a9a2a 0px, #2a9a2a 6px,
+      #3ac43a 6px, #3ac43a 12px,
+      #4ae04a 12px, #4ae04a 18px
+    );
+    box-shadow: inset 0 2px 0 rgba(255,255,255,0.15);
+    transition: width 0.8s steps(20);
+    position: relative;
+    min-width: 0;
+    image-rendering: pixelated;
+  }
+  .progress-bar-wrap.global .progress-text {
+    text-align: center;
+    font-family: var(--font-pixel-cjk);
+    font-size: 10px;
+    margin-top: 10px;
+    color: var(--green-bright);
+    text-shadow: 1px 1px 0 #0a2a0a;
+  }
+
+  /* ========== ADVENTURER CARDS ========== */
+  .adventurers-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    gap: 20px;
+  }
+  .adventurer-card {
+    background: linear-gradient(180deg, #1e1630 0%, #16102a 100%);
+    padding: 24px;
+    position: relative;
+    box-shadow:
+      0 0 0 3px #000,
+      0 0 0 6px var(--border-dim);
+    transition: box-shadow 0.15s;
+    image-rendering: pixelated;
+  }
+  .adventurer-card:hover {
+    box-shadow:
+      0 0 0 3px #000,
+      0 0 0 6px var(--border-gold-dark),
+      0 0 0 7px #000,
+      0 0 0 10px var(--border-gold),
+      0 0 20px rgba(212,168,67,0.15);
+  }
+  .adventurer-card .card-header {
+    display: flex; align-items: center; gap: 14px; margin-bottom: 18px;
+  }
+  .adventurer-card .avatar {
+    width: 48px; height: 48px;
+    background: #1a1030;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px;
+    image-rendering: pixelated;
+    box-shadow:
+      0 0 0 2px #000,
+      0 0 0 4px var(--border-gold-dark);
+  }
+  .adventurer-card .adventurer-name {
+    font-size: 14px; font-weight: 700; color: #ffe090;
+    letter-spacing: 1px;
+    font-family: var(--font-pixel-cjk);
+    text-shadow: 1px 1px 0 #6a4a10;
+  }
+  .adventurer-card .adventurer-role {
+    font-size: 10px; color: var(--text-dim);
+    font-family: var(--font-pixel-cjk);
+  }
+  .adventurer-card .percent-badge {
+    margin-left: auto;
+    font-family: var(--font-pixel);
+    font-size: 14px;
+    background: rgba(30,15,50,0.9);
+    padding: 6px 10px;
+    box-shadow:
+      0 0 0 2px #000,
+      0 0 0 4px var(--blue-dark);
+  }
+  .adventurer-card .adventurer-progress {
+    margin-bottom: 16px;
+  }
+  /* Individual pixel progress bar */
+  .adventurer-card .progress-outer {
+    height: 14px;
+    background: #0a0a1a;
+    box-shadow:
+      0 0 0 2px #000,
+      0 0 0 4px var(--blue-dark);
+    overflow: hidden;
+    image-rendering: pixelated;
+  }
+  .adventurer-card .progress-fill {
+    height: 100%;
+    background: repeating-linear-gradient(
+      90deg,
+      #2a5ae0 0px, #2a5ae0 5px,
+      #3a6af0 5px, #3a6af0 10px,
+      #5b9cf5 10px, #5b9cf5 15px
+    );
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.2);
+    transition: width 0.8s steps(20);
+    image-rendering: pixelated;
+  }
+  .adventurer-card .progress-label {
+    display: flex; justify-content: space-between;
+    font-size: 10px; color: var(--text-dim); margin-top: 6px;
+    font-family: var(--font-pixel-cjk);
+  }
+  .adventurer-card .quest-list {
+    list-style: none;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .adventurer-card .quest-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px;
+    background: rgba(0,0,0,0.3);
+    font-size: 11px;
+    cursor: pointer;
+    font-family: var(--font-pixel-cjk);
+    box-shadow:
+      0 0 0 2px #000,
+      0 0 0 3px rgba(90,70,130,0.4);
+  }
+  .adventurer-card .quest-item:hover {
+    box-shadow:
+      0 0 0 2px #000,
+      0 0 0 3px var(--border-gold-dark);
+  }
+  .quest-item .quest-icon {
+    font-size: 16px; flex-shrink: 0;
+    image-rendering: pixelated;
+  }
+  .quest-item .quest-name {
+    flex: 1;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    color: var(--text-primary);
+  }
+  .quest-item .quest-status {
+    font-size: 10px; padding: 3px 8px; flex-shrink: 0;
+    font-family: var(--font-pixel-cjk);
+    box-shadow: 0 0 0 2px #000;
+  }
+  .quest-item .quest-status.done {
+    background: #0a2a0a; color: var(--green-bright);
+    box-shadow: 0 0 0 2px #000, 0 0 0 3px var(--green-dark);
+  }
+  .quest-item .quest-status.progress {
+    background: #2a1a00; color: var(--accent-amber);
+    box-shadow: 0 0 0 2px #000, 0 0 0 3px #5a3a00;
+  }
+
+  /* ========== HALL OF FAME ========== */
+  .hall-of-fame {
+    background: linear-gradient(180deg, #1c1630 0%, #120d28 100%);
+    padding: 28px 32px;
+    position: relative;
+    box-shadow:
+      0 0 0 3px #000,
+      0 0 0 6px var(--border-dim),
+      0 0 0 7px #000,
+      0 0 0 10px var(--border-gold);
+  }
+  .hall-of-fame::after {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 4px;
+    background: repeating-linear-gradient(90deg, #ffe090 0px, #ffe090 12px, #000 12px, #000 16px);
+  }
+  .hall-of-fame .section-title {
+    font-family: var(--font-pixel);
+    font-size: 11px;
+    color: #ffe090;
+    letter-spacing: 2px;
+    margin-bottom: 20px;
+    text-shadow: 2px 2px 0 #6a4a10;
+  }
+  .hall-of-fame table {
+    width: 100%; border-collapse: collapse;
+  }
+  .hall-of-fame th {
+    text-align: left; padding: 10px 16px;
+    font-size: 10px; color: var(--text-dim); letter-spacing: 1px;
+    font-family: var(--font-pixel-cjk);
+    border-bottom: 3px double var(--border-dim);
+  }
+  .hall-of-fame td {
+    padding: 10px 16px; font-size: 12px;
+    border-bottom: 1px solid rgba(58,42,92,0.4);
+  }
+  .hall-of-fame tr:last-child td { border-bottom: none; }
+  .hall-of-fame .clear-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    background: #0a2a0a;
+    color: var(--green-bright);
+    font-size: 10px;
+    font-family: var(--font-pixel-cjk);
+    box-shadow: 0 0 0 2px #000, 0 0 0 3px var(--green-dark);
+  }
+  .hall-of-fame .no-records {
+    text-align: center; padding: 40px; color: var(--text-dim);
+    font-size: 12px; font-family: var(--font-pixel-cjk);
+  }
+
+  /* ========== HISTORY SECTION ========== */
+  .history-section {
+    background: linear-gradient(180deg, #1c1628 0%, #140e22 100%);
+    padding: 28px 32px;
+    position: relative;
+    box-shadow:
+      0 0 0 3px #000,
+      0 0 0 6px var(--border-dim),
+      0 0 0 7px #000,
+      0 0 0 10px var(--accent-purple-dark);
+  }
+  .history-section::after {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 4px;
+    background: repeating-linear-gradient(90deg, var(--accent-purple) 0px, var(--accent-purple) 12px, #000 12px, #000 16px);
+  }
+  .history-section .section-title {
+    font-family: var(--font-pixel);
+    font-size: 11px;
+    color: #b08cf0;
+    letter-spacing: 2px;
+    margin-bottom: 20px;
+    text-shadow: 2px 2px 0 #2a0a4a;
+  }
+  .history-controls {
+    display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+    margin-bottom: 20px;
+  }
+  .history-controls label {
+    color: var(--text-dim);
+    font-family: var(--font-pixel); font-size: 10px;
+  }
+  .history-controls input[type="date"] {
+    padding: 8px 14px;
+    background: #0d081a;
+    color: var(--text-primary);
+    font-size: 14px;
+    font-family: var(--font-pixel-cjk);
+    box-shadow: 0 0 0 2px #000, 0 0 0 4px var(--border-dim);
+    border: 0; outline: none;
+  }
+  .history-controls input[type="date"]:focus {
+    box-shadow: 0 0 0 2px #000, 0 0 0 4px var(--accent-purple);
+  }
+  /* PIXEL BUTTON */
+  .history-controls .btn {
+    padding: 8px 16px;
+    font-size: 10px;
+    cursor: pointer;
+    border: 0; outline: none;
+    background: #1a1030;
+    color: var(--text-primary);
+    font-family: var(--font-pixel-cjk);
+    box-shadow:
+      0 0 0 2px #000,
+      0 0 0 4px var(--border-dim),
+      0 4px 0 0 #0a0018;
+    position: relative; top: 0;
+    transition: top 0.05s, box-shadow 0.05s;
+    image-rendering: pixelated;
+  }
+  .history-controls .btn:hover {
+    box-shadow:
+      0 0 0 2px #000,
+      0 0 0 4px var(--accent-purple),
+      0 4px 0 0 #0a0018;
+  }
+  .history-controls .btn:active {
+    top: 4px;
+    box-shadow:
+      0 0 0 2px #000,
+      0 0 0 4px var(--accent-purple);
+  }
+  .history-controls .btn.primary {
+    background: #2a1040;
+    color: #b08cf0;
+    box-shadow:
+      0 0 0 2px #000,
+      0 0 0 4px var(--accent-purple-dark),
+      0 4px 0 0 #0a0018;
+  }
+  .history-controls .btn.primary:hover {
+    box-shadow:
+      0 0 0 2px #000,
+      0 0 0 4px var(--accent-purple),
+      0 4px 0 0 #0a0018;
+  }
+  .history-controls .btn.primary:active {
+    top: 4px;
+    box-shadow:
+      0 0 0 2px #000,
+      0 0 0 4px var(--accent-purple);
+  }
+  .history-controls .available-dates {
+    display: flex; gap: 8px; flex-wrap: wrap;
+  }
+  .history-controls .date-chip {
+    padding: 4px 10px;
+    background: #0d081a;
+    font-size: 10px; color: var(--text-dim);
+    cursor: pointer;
+    font-family: var(--font-pixel-cjk);
+    box-shadow: 0 0 0 2px #000, 0 0 0 3px var(--border-dim);
+  }
+  .history-controls .date-chip:hover, .date-chip.active {
+    color: var(--accent-purple);
+    box-shadow: 0 0 0 2px #000, 0 0 0 3px var(--accent-purple);
+  }
+
+  .history-preview {
+    display: none;
+    padding: 20px;
+    background: rgba(0,0,0,0.3);
+    box-shadow: 0 0 0 2px #000, 0 0 0 3px rgba(154,108,240,0.3);
+  }
+  .history-preview.active { display: block; }
+
+  /* ========== FOOTER ========== */
+  .footer {
+    text-align: center; padding: 30px;
+    color: var(--text-dim); font-size: 10px;
+    font-family: var(--font-pixel-cjk);
+  }
+  .footer .refresh-info {
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+
+  /* ========== RESPONSIVE ========== */
+  @media (max-width: 768px) {
+    .adventurers-grid { grid-template-columns: 1fr; }
+    .header h1 { font-size: 14px; }
+    .global-progress-section .stats-row { flex-direction: column; align-items: stretch; }
+    .hall-of-fame table { font-size: 10px; }
+    .hall-of-fame th, .hall-of-fame td { padding: 6px 8px; }
+  }
+
+  /* ========== SCROLLBAR ========== */
+  ::-webkit-scrollbar { width: 8px; }
+  ::-webkit-scrollbar-track {
+    background: #0a0814;
+    box-shadow: inset 0 0 0 2px #1a1030;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--border-dim);
+    box-shadow: 0 0 0 2px #0a0814;
+  }
+  ::-webkit-scrollbar-thumb:hover { background: var(--border-dim-light); }
+
+  /* ========== ANIMATIONS ========== */
+  @keyframes flash-update {
+    0% { box-shadow: 0 0 0 0 rgba(240,215,140,0.6), 0 0 0 2px #000, 0 0 0 4px var(--border-gold-dark); }
+    100% { box-shadow: 0 0 0 16px rgba(240,215,140,0), 0 0 0 2px #000, 0 0 0 4px var(--border-gold-dark); }
+  }
+  .flash-update { animation: flash-update 1s steps(8) 1; }
+
+  /* ========== QUEST MODAL ========== */
+  .quest-modal-overlay {
+    display: none;
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.8);
+    z-index: 999;
+    justify-content: center; align-items: center;
+  }
+  .quest-modal-overlay.show { display: flex; }
+  .quest-modal {
+    background: linear-gradient(180deg, #1e1630 0%, #140e24 100%);
+    padding: 32px;
+    max-width: 600px; width: 90%;
+    position: relative;
+    box-shadow:
+      0 0 0 4px #000,
+      0 0 0 8px var(--border-gold-dark),
+      0 0 0 9px #000,
+      0 0 0 12px var(--border-gold),
+      0 0 40px rgba(212,168,67,0.2);
+    image-rendering: pixelated;
+  }
+  .quest-modal .modal-close {
+    position: absolute; top: 12px; right: 12px;
+    width: 32px; height: 32px;
+    background: #2a1040;
+    color: var(--text-dim); font-size: 16px;
+    cursor: pointer;
+    border: 0;
+    font-family: var(--font-pixel);
+    box-shadow:
+      0 0 0 2px #000,
+      0 0 0 3px var(--accent-purple-dark),
+      0 3px 0 0 #0a0018;
+  }
+  .quest-modal .modal-close:active {
+    transform: translateY(3px);
+    box-shadow: 0 0 0 2px #000, 0 0 0 3px var(--accent-purple-dark);
+  }
+  .quest-modal h3 {
+    font-family: var(--font-pixel); font-size: 12px;
+    color: #ffe090; margin-bottom: 20px;
+    text-shadow: 2px 2px 0 #6a4a10;
+  }
+  .quest-modal .detail-row { margin-bottom: 14px; }
+  .quest-modal .detail-label {
+    font-size: 10px; color: var(--text-dim); letter-spacing: 1px;
+    margin-bottom: 4px;
+    font-family: var(--font-pixel-cjk);
+  }
+  .quest-modal .detail-value {
+    font-size: 12px; color: var(--text-primary);
+    line-height: 1.6;
+    font-family: var(--font-pixel-cjk);
+  }
+  </style>
+</head>
+<body>
+
+<div class="main-container">
+
+  <!-- 顶部标题 -->
+  <header class="header">
+    <div class="title-icon"><img src="pixel_kcz_logo.png" alt="KCZ 科创者" width="300" height="72"></div>
+    <h1>冒险者公会 · 闯关进度指挥部</h1>
+    <p class="subtitle">A D V E N T U R E R ' S &nbsp; G U I L D</p>
+    <div class="date-badge">
+      <span class="dot"></span>
+      <span id="currentDate">---</span>
+      <span style="color:#4ade80;">● 实时监控中</span>
+    </div>
+  </header>
+
+  <!-- 全队总进度 -->
+  <section class="global-progress-section" id="globalSection">
+    <div class="section-label">◈ 公会总进度</div>
+    <div class="stats-row">
+      <div class="stat-item">
+        <div class="stat-value" id="globalPercent">--%</div>
+        <div class="stat-label">总完成率</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value" id="globalCleared">--</div>
+        <div class="stat-label">已通关</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value" id="globalTotal">--</div>
+        <div class="stat-label">总关卡</div>
+      </div>
+      <div class="progress-bar-wrap global">
+        <div class="progress-outer">
+          <div class="progress-fill" id="globalFill" style="width:0%"></div>
+        </div>
+        <div class="progress-text" id="globalText">加载中...</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 冒险者卡片区域 -->
+  <section class="adventurers-grid" id="adventurersGrid">
+  </section>
+
+  <!-- 通关记录 -->
+  <section class="hall-of-fame" id="hallOfFame">
+    <div class="section-title">★ 公会通关荣誉榜</div>
+    <div id="hallContent"></div>
+  </section>
+
+  <!-- 闯关历史日志 -->
+  <section class="history-section" id="historySection">
+    <div class="section-title">¶ 闯关历史日志</div>
+    <div class="history-controls">
+      <label for="historyDate">选择日期：</label>
+      <input type="date" id="historyDate">
+      <button class="btn primary" onclick="loadHistory()">≡ 翻阅日志</button>
+      <button class="btn" onclick="resetToToday()">↺ 回到今日</button>
+      <span style="color:var(--text-dim);font-size:12px;">可用存档：</span>
+      <div class="available-dates" id="dateChips"></div>
+    </div>
+    <div class="history-preview" id="historyPreview">
+      <div id="historyContent"></div>
+    </div>
+  </section>
+
+  <!-- 页脚 -->
+  <footer class="footer">
+    <div class="refresh-info">
+      <span>⏲ 每 5 分钟自动同步腾讯文档</span>
+      <span>·</span>
+      <span id="lastRefresh">上次刷新：---</span>
+    </div>
+  </footer>
+
+</div>
+
+<!-- 关卡详情弹窗 -->
+<div class="quest-modal-overlay" id="questModal">
+  <div class="quest-modal">
+    <button class="modal-close" onclick="closeQuestModal()">✕</button>
+    <h3 id="modalTitle">关卡详情</h3>
+    <div class="detail-row">
+      <div class="detail-label">冒险者</div>
+      <div class="detail-value" id="modalAdventurer">---</div>
+    </div>
+    <div class="detail-row">
+      <div class="detail-label">关卡名称</div>
+      <div class="detail-value" id="modalQuestName">---</div>
+    </div>
+    <div class="detail-row">
+      <div class="detail-label">关卡描述 / 制作参考</div>
+      <div class="detail-value" id="modalDesc">---</div>
+    </div>
+    <div class="detail-row">
+      <div class="detail-label">完成状态</div>
+      <div class="detail-value" id="modalStatus">---</div>
+    </div>
+    <div class="detail-row">
+      <div class="detail-label">闯关进度</div>
+      <div class="detail-value" id="modalProgress">---</div>
+    </div>
+    <div class="detail-row" id="modalReasonRow" style="display:none;">
+      <div class="detail-label">未完成理由</div>
+      <div class="detail-value" id="modalReason">---</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ==================== 数据层 ====================
+
+// 动态数据（从 data.json 加载）
+let RAW_DATA = [];
+
+// 处理合并单元格：填充 null 冒险者姓名
+function fillNames(data) {
+  let currentName = '';
+  return data.map(row => {
+    if (row['冒险者姓名'] && row['冒险者姓名'].trim()) {
+      currentName = row['冒险者姓名'].trim();
+    }
+    return { ...row, '冒险者姓名': currentName };
+  });
+}
+
+// 按今天日期过滤数据。若数据中有"日期"字段则只保留今天的记录，无日期字段则保留全部（向后兼容）
+function filterTodayData(data) {
+  if (!data || data.length === 0) return [];
+  const hasDateField = data[0].hasOwnProperty('日期');
+  if (!hasDateField) return data; // 老数据无日期字段，全部保留
+  const today = new Date().toISOString().split('T')[0];
+  return data.filter(row => row['日期'] === today);
+}
+
+// 解析进度百分比
+function parsePercent(str) {
+  if (!str) return 0;
+  const m = String(str).match(/(\d+)/);
+  return m ? parseInt(m[1]) : 0;
+}
+
+// 按冒险者分组
+function groupByAdventurer(data) {
+  const groups = {};
+  data.forEach(row => {
+    const name = row['冒险者姓名'];
+    if (!name) return;
+    if (!groups[name]) groups[name] = [];
+    groups[name].push(row);
+  });
+  return groups;
+}
+
+// 计算冒险者汇总（进度 = 已完成任务的闯关进度累加之和）
+function calcAdventurerStats(quests) {
+  const total = quests.length;
+  const done = quests.filter(q => q['完成状态'] === '已完成').length;
+  const sumPercent = quests
+    .filter(q => q['完成状态'] === '已完成')
+    .reduce((s, q) => s + parsePercent(q['闯关进度']), 0);
+  const avgPercent = sumPercent;
+  return { total, done, avgPercent };
+}
+
+// 计算全队汇总：已完成闯关进度总和 / 冒险者总数×100（每人规划上限100%）
+function calcGlobalStats(allQuests) {
+  const total = allQuests.length;
+  const done = allQuests.filter(q => q['完成状态'] === '已完成').length;
+  const sumPercent = allQuests
+    .filter(q => q['完成状态'] === '已完成')
+    .reduce((s, q) => s + parsePercent(q['闯关进度']), 0);
+  // 总规划 = 冒险者人数 × 100%（每人个人进度上限）
+  const names = new Set(allQuests.map(q => q['冒险者姓名']).filter(Boolean));
+  const totalPlan = names.size * 100;
+  const avgPercent = totalPlan > 0 ? Math.round(sumPercent / totalPlan * 100) : 0;
+  return { total, done, avgPercent };
+}
+
+// 通关记录
+function getClearedQuests(allQuests) {
+  return allQuests.filter(q => q['完成状态'] === '已完成');
+}
+
+// 生成快照
+function generateSnapshot(data) {
+  const todayData = filterTodayData(data);
+  const filled = fillNames(todayData);
+  const groups = groupByAdventurer(filled);
+  const allQuests = filled;
+  const globalStats = calcGlobalStats(allQuests);
+  const adventurers = Object.entries(groups).map(([name, quests]) => ({
+    name,
+    quests,
+    stats: calcAdventurerStats(quests)
+  })).sort((a, b) => b.stats.avgPercent - a.stats.avgPercent);
+  const cleared = getClearedQuests(allQuests);
+
+  return {
+    date: new Date().toISOString().split('T')[0],
+    timestamp: Date.now(),
+    globalStats,
+    adventurers,
+    cleared,
+    rawData: data // 保存完整原始数据（含所有日期）
+  };
+}
+
+// ==================== 存储层 ====================
+const STORAGE_PREFIX = 'adventure_guild_';
+
+function saveSnapshot(snapshot) {
+  const key = STORAGE_PREFIX + snapshot.date;
+  localStorage.setItem(key, JSON.stringify(snapshot));
+  // 同时保存最新数据
+  localStorage.setItem(STORAGE_PREFIX + 'latest', JSON.stringify(snapshot));
+}
+
+function loadSnapshot(dateStr) {
+  const key = STORAGE_PREFIX + dateStr;
+  const raw = localStorage.getItem(key);
+  return raw ? JSON.parse(raw) : null;
+}
+
+function getAvailableDates() {
+  const dates = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key.startsWith(STORAGE_PREFIX) && key !== STORAGE_PREFIX + 'latest') {
+      dates.push(key.replace(STORAGE_PREFIX, ''));
+    }
+  }
+  return dates.sort().reverse();
+}
+
+// ==================== 渲染层 ====================
+
+const AVATARS = {
+  '琪琪': '♞', '在旭': '♛', '璐宁': '♟',
+  '斌斌': '♜', '鸿锐': '♝'
+};
+const ROLES = {
+  '琪琪': 'E L F', '在旭': 'M A G E', '璐宁': 'R A N G E R',
+  '斌斌': 'K N I G H T', '鸿锐': 'S W O R D'
+};
+const QUEST_ICONS = {
+  '已完成': '★', '制作中': '►', '未开始': '◇'
+};
+const QUEST_STATUS_CLASS = {
+  '已完成': 'done', '制作中': 'progress', '未开始': 'progress'
+};
+
+function getAdventurerNames() {
+  return [...new Set(fillNames(RAW_DATA).map(r => r['冒险者姓名']))];
+}
+
+function renderCurrentDate() {
+  const now = new Date();
+  const days = ['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
+  document.getElementById('currentDate').textContent =
+    `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')} ${days[now.getDay()]}`;
+}
+
+function renderGlobalProgress(stats) {
+  document.getElementById('globalPercent').textContent = stats.avgPercent + '%';
+  document.getElementById('globalCleared').textContent = stats.done;
+  document.getElementById('globalTotal').textContent = stats.total;
+  document.getElementById('globalFill').style.width = stats.avgPercent + '%';
+  document.getElementById('globalText').textContent =
+    `${stats.done} / ${stats.total} 关卡已通关 · 全队完成率 ${stats.avgPercent}%`;
+}
+
+function renderAdventurers(adventurers) {
+  const grid = document.getElementById('adventurersGrid');
+  grid.innerHTML = adventurers.map(a => {
+    const { name, quests, stats } = a;
+    const questItems = quests.map(q => {
+      const icon = QUEST_ICONS[q['完成状态']] || '□';
+      const statusClass = QUEST_STATUS_CLASS[q['完成状态']] || 'progress';
+      const statusText = q['完成状态'] || '未知';
+      const questNameShort = q['关卡名称'] && q['关卡名称'].length > 18
+        ? q['关卡名称'].substring(0, 18) + '...'
+        : (q['关卡名称'] || '未命名关卡');
+      return `
+        <li class="quest-item" onclick="showQuestDetail('${escapeHTML(name)}', '${escapeHTML(q['关卡名称']||'')}', '${escapeHTML(q['关卡描述']||'')}', '${escapeHTML(q['完成状态']||'')}', '${escapeHTML(q['闯关进度']||'')}', '${escapeHTML(q['未完成理由阐述']||'')}')">
+          <span class="quest-icon">${icon}</span>
+          <span class="quest-name" title="${escapeHTML(q['关卡名称']||'')}">${escapeHTML(questNameShort)}</span>
+          <span class="quest-status ${statusClass}">${statusText} · ${q['闯关进度']||'0%'}</span>
+        </li>`;
+    }).join('');
+
+    // 关卡完成率颜色
+    let percentColor = '#60a5fa';
+    if (stats.avgPercent >= 100) percentColor = '#4ade80';
+    else if (stats.avgPercent >= 50) percentColor = '#fbbf24';
+
+    return `
+      <div class="adventurer-card">
+        <div class="card-header">
+          <div class="avatar">${AVATARS[name] || '?'}</div>
+          <div>
+            <div class="adventurer-name">${escapeHTML(name)}</div>
+            <div class="adventurer-role">${ROLES[name] || '冒险者'} · ${stats.done}/${stats.total} 通关</div>
+          </div>
+          <div class="percent-badge" style="color:${percentColor}">
+            ${stats.avgPercent}%
+          </div>
+        </div>
+        <div class="adventurer-progress">
+          <div class="progress-outer">
+            <div class="progress-fill" style="width:${stats.avgPercent}%"></div>
+          </div>
+          <div class="progress-label">
+            <span>个人闯关进度</span>
+            <span>${stats.avgPercent}% 完成</span>
+          </div>
+        </div>
+        <ul class="quest-list">${questItems}</ul>
+      </div>`;
+  }).join('');
+}
+
+function renderHallOfFame(cleared) {
+  const container = document.getElementById('hallContent');
+  if (!cleared || cleared.length === 0) {
+    container.innerHTML = '<div class="no-records">☠ 暂无通关记录，冒险者们仍在征途中...</div>';
+    return;
+  }
+  const rows = cleared.map(q => `
+    <tr>
+      <td>${escapeHTML(q['冒险者姓名'])}</td>
+      <td>${escapeHTML(q['关卡名称'] || '未命名')}</td>
+      <td>${escapeHTML((q['关卡描述'] || '无').substring(0, 50))}${q['关卡描述'] && q['关卡描述'].length > 50 ? '...' : ''}</td>
+      <td><span class="clear-badge">★ 已通关</span></td>
+    </tr>`).join('');
+  container.innerHTML = `
+    <table>
+      <thead><tr><th>冒险者</th><th>关卡名称</th><th>关卡描述</th><th>状态</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+function renderDateChips() {
+  const dates = getAvailableDates();
+  const container = document.getElementById('dateChips');
+  const today = new Date().toISOString().split('T')[0];
+  container.innerHTML = dates.map(d =>
+    `<span class="date-chip${d === today ? ' active' : ''}" onclick="selectDate('${d}')">${d}</span>`
+  ).join('');
+  // 设置日期选择器默认值为今天
+  document.getElementById('historyDate').value = today;
+}
+
+function renderAll(snapshot) {
+  renderGlobalProgress(snapshot.globalStats);
+  renderAdventurers(snapshot.adventurers);
+  renderHallOfFame(snapshot.cleared);
+  renderDateChips();
+  document.getElementById('lastRefresh').textContent =
+    '上次刷新：' + new Date().toLocaleTimeString('zh-CN');
+}
+
+// ==================== 日期选择与历史 ====================
+function selectDate(dateStr) {
+  document.getElementById('historyDate').value = dateStr;
+  loadHistory();
+}
+
+function loadHistory() {
+  const dateStr = document.getElementById('historyDate').value;
+  if (!dateStr) return;
+  const snapshot = loadSnapshot(dateStr);
+  const preview = document.getElementById('historyPreview');
+  const content = document.getElementById('historyContent');
+
+  if (!snapshot) {
+    content.innerHTML = '<div class="no-records">✗ 该日期暂无存档数据</div>';
+    preview.classList.add('active');
+    return;
+  }
+
+  const { globalStats, adventurers, cleared } = snapshot;
+  let html = '<div style="margin-bottom:24px;">';
+  html += '<h4 style="color:#ffe090;margin-bottom:12px;text-shadow:1px 1px 0 #6a4a10;font-family:var(--font-pixel-cjk);">≡ ' + dateStr + ' 闯关数据快照</h4>';
+
+  // 全局统计
+  html += '<div style="display:flex;gap:30px;flex-wrap:wrap;margin-bottom:16px;font-family:var(--font-pixel-cjk);">';
+  html += '<div><span style="color:var(--text-dim);">TOTAL:</span><strong style="color:#ffe090;margin-left:4px;">' + globalStats.total + '</strong></div>';
+  html += '<div><span style="color:var(--text-dim);">CLEARED:</span><strong style="color:#4ae04a;margin-left:4px;">' + globalStats.done + '</strong></div>';
+  html += '<div><span style="color:var(--text-dim);">RATE:</span><strong style="color:#ffe090;margin-left:4px;">' + globalStats.avgPercent + '%</strong></div>';
+  html += '</div>';
+
+  // 冒险者列表
+  html += '<table style="width:100%;border-collapse:collapse;font-size:11px;font-family:var(--font-pixel-cjk);">';
+  html += '<thead><tr style="border-bottom:3px double var(--border-dim);">';
+  html += '<th style="text-align:left;padding:8px;color:var(--text-dim);">ADVENTURER</th>';
+  html += '<th style="text-align:left;padding:8px;color:var(--text-dim);">QUESTS</th>';
+  html += '<th style="text-align:left;padding:8px;color:var(--text-dim);">CLEARED</th>';
+  html += '<th style="text-align:left;padding:8px;color:var(--text-dim);">RATE</th>';
+  html += '</tr></thead><tbody>';
+  adventurers.forEach(a => {
+    html += '<tr style="border-bottom:1px solid rgba(58,42,92,0.4);">';
+    html += '<td style="padding:8px;color:#ffe090;">' + escapeHTML(a.name) + '</td>';
+    html += '<td style="padding:8px;">' + a.stats.total + '</td>';
+    html += '<td style="padding:8px;color:#4ae04a;">' + a.stats.done + '</td>';
+    html += '<td style="padding:8px;">' + a.stats.avgPercent + '%</td>';
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+
+  // 通关记录
+  if (cleared.length > 0) {
+    html += '<h4 style="color:#ffe090;margin:20px 0 12px;text-shadow:1px 1px 0 #6a4a10;font-family:var(--font-pixel-cjk);">★ CLEARED (' + cleared.length + ')</h4>';
+    html += '<table style="width:100%;border-collapse:collapse;font-size:11px;font-family:var(--font-pixel-cjk);">';
+    cleared.forEach(q => {
+      html += '<tr style="border-bottom:1px solid rgba(58,42,92,0.4);">';
+      html += '<td style="padding:6px 8px;color:#ffe090;">' + escapeHTML(q['冒险者姓名']) + '</td>';
+      html += '<td style="padding:6px 8px;">' + escapeHTML(q['关卡名称'] || '未命名') + '</td>';
+      html += '<td style="padding:6px 8px;"><span class="clear-badge">★ CLEARED</span></td>';
+      html += '</tr>';
+    });
+    html += '</table>';
+  }
+
+  html += '</div>';
+  content.innerHTML = html;
+  preview.classList.add('active');
+}
+
+function resetToToday() {
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('historyDate').value = today;
+  document.getElementById('historyPreview').classList.remove('active');
+  document.getElementById('historyContent').innerHTML = '';
+  // 回到今日实时数据
+  const snap = generateSnapshot(RAW_DATA);
+  renderAll(snap);
+  // 高亮今日 chip
+  document.querySelectorAll('.date-chip').forEach(c => {
+    c.classList.toggle('active', c.textContent.trim() === today);
+  });
+}
+
+// ==================== 关卡详情弹窗 ====================
+function showQuestDetail(name, questName, desc, status, progress, reason) {
+  document.getElementById('modalTitle').textContent = '≡ QUEST DETAILS';
+  document.getElementById('modalAdventurer').textContent = name;
+  document.getElementById('modalQuestName').textContent = questName || '未命名关卡';
+  document.getElementById('modalDesc').textContent = desc || '无详细描述';
+  document.getElementById('modalStatus').textContent = (status || '未知') + ' · 进度 ' + (progress || '0%');
+  document.getElementById('modalProgress').textContent = progress || '0%';
+  if (reason) {
+    document.getElementById('modalReasonRow').style.display = '';
+    document.getElementById('modalReason').textContent = reason;
+  } else {
+    document.getElementById('modalReasonRow').style.display = 'none';
+  }
+  document.getElementById('questModal').classList.add('show');
+}
+
+function closeQuestModal() {
+  document.getElementById('questModal').classList.remove('show');
+}
+
+// 点击遮罩关闭
+document.getElementById('questModal').addEventListener('click', function(e) {
+  if (e.target === this) closeQuestModal();
+});
+
+function escapeHTML(str) {
+  if (!str) return '';
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// ==================== 快照管理 ====================
+// 清理旧逻辑产生的重复快照（连续日期数据相同则只保留最早一份）
+function cleanupDuplicateSnapshots() {
+  const dates = getAvailableDates();
+  if (dates.length < 2) return;
+
+  let removed = 0;
+  const snapshots = dates.map(d => ({ date: d, snap: loadSnapshot(d) })).filter(s => s.snap && s.snap.rawData);
+
+  for (let i = 1; i < snapshots.length; i++) {
+    const prevJSON = JSON.stringify(snapshots[i - 1].snap.rawData);
+    const currJSON = JSON.stringify(snapshots[i].snap.rawData);
+    if (prevJSON === currJSON) {
+      localStorage.removeItem(STORAGE_PREFIX + snapshots[i].date);
+      removed++;
+    }
+  }
+
+  if (removed > 0) {
+    console.log('[冒险者公会] 清理了 ' + removed + ' 个重复快照');
+  }
+}
+
+// 从 data.json 中读取所有历史日期，为缺失的日期自动生成快照
+function backfillHistoricalSnapshots() {
+  const hasDateField = RAW_DATA.length > 0 && RAW_DATA[0].hasOwnProperty('日期');
+  if (!hasDateField) return;
+
+  const allDates = [...new Set(RAW_DATA.map(r => r['日期']).filter(Boolean))];
+  const existingDates = getAvailableDates();
+  const today = new Date().toISOString().split('T')[0];
+  let backfilled = 0;
+
+  allDates.forEach(dateStr => {
+    if (dateStr === today) return;
+    if (existingDates.includes(dateStr)) return;
+
+    const dayData = RAW_DATA.filter(r => r['日期'] === dateStr);
+    const filled = fillNames(dayData);
+    const groups = groupByAdventurer(filled);
+    const allQuests = filled;
+    const globalStats = calcGlobalStats(allQuests);
+    const adventurers = Object.entries(groups).map(([name, quests]) => ({
+      name, quests, stats: calcAdventurerStats(quests)
+    })).sort((a, b) => b.stats.avgPercent - a.stats.avgPercent);
+    const cleared = getClearedQuests(allQuests);
+
+    const snapshot = { date: dateStr, timestamp: Date.now(), globalStats, adventurers, cleared, rawData: dayData };
+    localStorage.setItem(STORAGE_PREFIX + dateStr, JSON.stringify(snapshot));
+    backfilled++;
+  });
+
+  if (backfilled > 0) console.log('[冒险者公会] 回填了 ' + backfilled + ' 个历史快照');
+}
+
+// 每天自动保存当日快照，确保历史日志完整留存
+function checkSaveSnapshot() {
+  const today = new Date().toISOString().split('T')[0];
+  const prevDates = getAvailableDates();
+
+  // 如果今天还没有快照，就保存一份
+  if (!prevDates.includes(today)) {
+    saveSnapshot(generateSnapshot(RAW_DATA));
+    console.log('[冒险者公会] 保存今日快照：' + today);
+    return;
+  }
+
+  // 如果已有今天快照，检查数据是否有变化（仅对比今天的数据）
+  const todaySnap = loadSnapshot(today);
+  if (!todaySnap || !todaySnap.rawData) return;
+
+  const todayData = filterTodayData(RAW_DATA);
+  const todayJSON = JSON.stringify(todayData);
+  const snapJSON = JSON.stringify(todaySnap.rawData);
+
+  if (todayJSON !== snapJSON) {
+    saveSnapshot(generateSnapshot(RAW_DATA));
+    console.log('[冒险者公会] 数据变化，更新今日快照：' + today);
+  }
+}
+
+// ==================== 初始化 ====================
+function init() {
+  fetch('data.json?t=' + Date.now())
+    .then(res => res.json())
+    .then(data => {
+      RAW_DATA = data;
+      doInit();
+    })
+    .catch(err => {
+      console.error('加载数据失败', err);
+      document.getElementById('globalText').textContent = '数据加载失败，请刷新重试';
+    });
+}
+
+function doInit() {
+  renderCurrentDate();
+  cleanupDuplicateSnapshots();
+  // 回填 data.json 中有但 localStorage 中缺失的历史日期快照
+  backfillHistoricalSnapshots();
+  const snap = generateSnapshot(RAW_DATA);
+  renderAll(snap);
+  checkSaveSnapshot();
+}
+
+// ==================== 定时刷新 ====================
+// 每5分钟自动生成/更新快照并刷新UI
+const REFRESH_INTERVAL = 5 * 60 * 1000; // 5分钟
+let refreshTimer;
+
+function autoRefresh() {
+  fetch('data.json?t=' + Date.now())
+    .then(res => res.json())
+    .then(data => {
+      RAW_DATA = data;
+      const previewActive = document.getElementById('historyPreview').classList.contains('active');
+      if (!previewActive) {
+        const snap = generateSnapshot(RAW_DATA);
+        renderAll(snap);
+        checkSaveSnapshot();
+        console.log('[冒险者公会] 自动刷新完成：' + new Date().toLocaleTimeString());
+      }
+    })
+    .catch(err => console.error('[冒险者公会] 刷新失败', err));
+}
+
+function startAutoRefresh() {
+  refreshTimer = setInterval(autoRefresh, REFRESH_INTERVAL);
+  console.log('[冒险者公会] 自动刷新已启动，间隔：5分钟');
+}
+
+// 页面加载
+window.addEventListener('DOMContentLoaded', () => {
+  init();
+  startAutoRefresh();
+});
+
+// 页面关闭清理
+window.addEventListener('beforeunload', () => {
+  if (refreshTimer) clearInterval(refreshTimer);
+});
+</script>
+</body>
+</html>
